@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -ggdb
 LDFLAGS=
-SOURCES=src/main.c src/utils/fileManagement.c src/utils/screenOutput.c src/utils/Utils.c
+SOURCES=src/main.c src/utils/fileManagement.c src/utils/screenOutput.c src/utils/Utils.c src/EXT2/ext2.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=shooter
 

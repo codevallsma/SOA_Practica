@@ -28,3 +28,13 @@ int readFileName(char* filename){
     lseek(fd, -1, SEEK_CUR);
     return fd;
 }
+
+void read_file_volume_info(int fd){
+  if(isEXT2(fd)){
+      //read ext2 information
+      showEXT2info(fd);
+  } else {
+
+  }
+
+}
