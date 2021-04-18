@@ -3,7 +3,6 @@
 
 //Llibreries del sistema
 #include "generalLibreries.h"
-#include "structures.h"
 #include "Utils.h"
 
 #define BOLD    "\033[1m"
@@ -14,18 +13,14 @@
 #define MAGENTA "\x1b[35m"
 #define CYAN    "\x1b[36m"
 #define RESET     "\033[0m"
-#define PROGRAM_NAME "main.c"
-#define PROG_ARGUMENTS "<R0>"
-#define ERR_ARGS    BOLDRED "Error, missing arguments." RESET " Usage: ./" PROGRAM_NAME "PROG_ARGUMENTS"\n""
+#define PROGRAM_NAME "shooter"
+#define PROG_ARGUMENTS "<operation> <volumeName>"
+#define ERR_ARGS    BOLDRED "Error, missing arguments.\nUsage: ./" PROGRAM_NAME " " PROG_ARGUMENTS  "\n" RESET
 #define MSG_MAIN    BOLDGREEN "Message from main %d" RESET " \n"
 #define ERR_FILE_R  "Error when reading the file "
 #define ARG_ERROR "Error, missing arguments."
-#define INIT_DANNY "\nStarting Danny..."
 #define NO_DIRECTORY_FOUND "Cannot open directory"
 #define FILES_FOUND "%d files found\n"
-#define DISCONNECT BOLDRED "Disconnecting Danny...\n"
-#define DISCONNECTJACK BOLDRED "\nDisconnecting Jack...\n"
-#define DISCONNECTWENDY BOLDRED "\nDisconnecting Wendy...\n"
 #define MSG_ERR_SOCKET      "Error while creating the socket connection.\n"
 #define MSG_ERR_CONN        "Server connection error.\n"
 #define MSG_ERR_COM			"Comunication error!.\n"

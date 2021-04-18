@@ -8,7 +8,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include "structures.h"
 #include <ctype.h>
 
 

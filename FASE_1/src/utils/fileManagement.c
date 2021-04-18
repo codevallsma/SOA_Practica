@@ -28,4 +28,3 @@ int readFileName(char* filename){
     lseek(fd, -1, SEEK_CUR);
     return fd;
 }
-
