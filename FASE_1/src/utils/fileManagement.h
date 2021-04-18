@@ -6,6 +6,7 @@
 #include <dirent.h>
 #include "generalLibreries.h"
 #include "../EXT2/ext2.h"
+#include "../FAT16/fat16.h"
 
 int readFileName(char* filename);
 void read_file_volume_info(int fd);
