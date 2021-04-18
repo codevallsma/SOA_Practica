@@ -29,7 +29,18 @@ int readFileName(char* filename){
     return fd;
 }
 
+
+/**
+ * @brief Function that checks the file system detects if the file is
+ * fat32 or ext2 and displays its correspondant information
+ *
+ * @param  fd: the file descriptor of the volume to be inspected
+ * @retval fd : file descriptor
+ */
 void read_file_volume_info(int fd){
+  //print the filesystem header
+  printaColors(BLUE, "\n\n\t------ Filesystem Information ------");
+  //checking if the filesystem is EXT2
   if(isEXT2(fd)){
       //read ext2 information
       showEXT2info(fd);

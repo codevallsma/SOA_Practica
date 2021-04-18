@@ -10,6 +10,9 @@ int isEXT2(int fd){
 	return type == -4269;
 }
 
+/**
+* Read and print to the screen node information
+*/
 void showExt2InodeInfo(int fd){
   short twoBytes;
   int fourBytes;
@@ -43,6 +46,9 @@ void showExt2InodeInfo(int fd){
   printf("%s %d\n", FREE_INODE, fourBytes);
 }
 
+/**
+* Read and print to the screen block information
+*/
 void showEXT2_BlockInfo(int fd){
 
 	int fourBytes;
@@ -85,9 +91,43 @@ void showEXT2_BlockInfo(int fd){
 
 }
 
+/**
+* Read and print to the screen volume's information
+*/
+void showEXT2_VolumeInfo(int fd){
+
+	time_t time;
+
+  printaColors(BOLDGREEN,INFO_VOLUME);
+	// VOLUME NAME
+	char name[16];
+  lseek(fd, SUPERBLOCK_OFFSET + 120, SEEK_SET);
+  read(fd, &name, sizeof(name));
+	printf("%s %s\n", VOLUME_NAME, name);
+
+	// LAST CHECK
+  lseek(fd, SUPERBLOCK_OFFSET + 64, SEEK_SET);
+  read(fd, &time, sizeof(time));
+	printf("%s %s", LAST_CHECK, asctime(gmtime(&time)));
+
+	// LAST MOUNTING
+  lseek(fd, SUPERBLOCK_OFFSET + 52, SEEK_SET);
+  read(fd, &time, 2);
+	printf("%s %s", LAST_MOUNTING, asctime(gmtime(&time)));
+
+	// LAST WRITING
+  lseek(fd, SUPERBLOCK_OFFSET + 48, SEEK_SET);
+  read(fd, &time, 2);
+	printf("%s %s\n", LAST_WRITING, asctime(gmtime(&time)));
+
+}
+
 void showEXT2info(int fd) {
   //display inode information
+  printf("\n\tFilesystem: EXT2\n");
   printf("\n\n");
   showExt2InodeInfo(fd);
   showEXT2_BlockInfo(fd);
+  showEXT2_VolumeInfo(fd);
+  printf("\n\n");
 }
