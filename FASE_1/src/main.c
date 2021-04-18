@@ -43,10 +43,7 @@ int main(int argc, char *argv[]) {
         printaColors(BOLDRED,ARG_ERROR);
         return 1;
   }else{
-    char* buffer;
-    asprintf(&buffer,"%s%s", "../assets/",(char*)argv[2]);
     menu_options((char*)argv[2], (char*)argv[1]);
-    free(buffer);
   }
   return 0;
 }

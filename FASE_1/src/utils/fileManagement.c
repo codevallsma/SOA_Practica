@@ -44,8 +44,12 @@ void read_file_volume_info(int fd){
   if(isEXT2(fd)){
       //read ext2 information
       showEXT2info(fd);
+  } else if(isFAT16(fd)){
+      //read fat16 information
+      showFAT16info(fd);
   } else {
-
+    //filesystem not ext2 or fat16
+    printaColors(MAGENTA, "Sistema d’arxius no és ni EXT2 ni FAT16.");
   }
 
 }
