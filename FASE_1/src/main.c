@@ -14,7 +14,7 @@
 /*
 Switch that allows us to know which option the user is requesting
 */
-void menu_options(char * volumeName, char * option){
+void menu_options(char * volumeName, char * option, char *argv[]){
 
   //opening the volume file and if it does not exist display error to the user
   int volumeFile = readFileName(volumeName);
@@ -25,6 +25,7 @@ void menu_options(char * volumeName, char * option){
       //option info, now we have to figure out what type of volume is
       read_file_volume_info(volumeFile);
     } else if ( strcmp(option,"/find" )==0){
+      findFileInVolume(volumeFile, (char*)argv[3]);
       //option find
     } else if ( strcmp(option,"/delete") ){
       //option delete
@@ -39,11 +40,11 @@ void menu_options(char * volumeName, char * option){
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 3) {
+  if (argc < 3) {
         printaColors(BOLDRED,ARG_ERROR);
         return 1;
   }else{
-    menu_options((char*)argv[2], (char*)argv[1]);
+    menu_options((char*)argv[2], (char*)argv[1], argv);
   }
   return 0;
 }
