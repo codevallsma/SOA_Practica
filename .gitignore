@@ -49,7 +49,7 @@ cmake-build-debug/
 CMakeLists.txt
 .idea/
 ../CMakeLists.txt
-../Ext2
+Ext2
 ../cmake-build-debug/
 
 # Debug files
