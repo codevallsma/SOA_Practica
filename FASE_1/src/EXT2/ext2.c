@@ -138,14 +138,14 @@ unsigned int inode_table;
 unsigned int s_inodes_per_group;
 unsigned int s_blocks_per_group;
 
-/*
+/**
 Given a block size and the block number we can work out the position of the next block
 */
 unsigned int getBlockOffset(unsigned int block, unsigned int block_size) {
     return SUPERBLOCK_OFFSET + (block - 1) * block_size;
 }
 
-/*
+/**
 Function that reads the correspondant inode given the inode number
 */
 struct Ext2_inode getInode(int fd, int inode_num, unsigned int block_size) {
@@ -179,50 +179,49 @@ int checkFile(int volume, char *userFile, struct Ext2_dir_entry entry, unsigned 
 
     if (!strcmp(userFile, file_name)) {
         struct Ext2_inode nextInode = getInode(volume, entry.inode, block_size);
-        printf("%s %u bytes.\n", FILE_FOUND, nextInode.i_size);
+        printf("%s %u bytes.\n\n", FILE_FOUND, nextInode.i_size);
         return true;
     }
 
     return false;
 }
-
+/**
+ * Returns an entry of the file system given the offset in bytes
+ * @param volumeFd : the file descriptor of the volume
+ * @param offset
+ * @return : The entry struct read
+ */
 struct Ext2_dir_entry getEntry(int volumeFd, unsigned int offset) {
     struct Ext2_dir_entry entry;
-
     //reading the inode first
     lseek(volumeFd, offset, SEEK_SET);
     read(volumeFd, &entry.inode, 4);
-
     //we have to read the directory length
     read(volumeFd, &entry.rec_len, 2);
-
     //we also have to read the name length
     read(volumeFd, &entry.name_len, 1);
-
     //reading the file type
     read(volumeFd, &entry.file_type, 1);
-
-    //finaly reading the file name
-    fill_delimiter(entry.name, EXT2_NAME_LENGTH);
+    //filling the array with \0
+    memset(entry.name,'\0',EXT2_NAME_LENGTH);
+    //finally reading the file name
     read(volumeFd, entry.name, entry.name_len);
+
     //returning the entry value
     return entry;
 }
 
-/*
-This function looks for the fileName given by parameters an
+/**
+This function looks for the fileName given by parameters and returns true if it exists in the root directory of ext2
 */
 bool lookForFile(int fd, struct Ext2_inode inode, char *fileName, unsigned int block_size) {
     struct Ext2_dir_entry dirEntry;
     uint32_t size;
-    bool found = false;
     uint32_t dir_offset;
-    int indexnotzero = 0;
     //we have to read each directory entry of the root Directory
     for (int index_pointers = 0; index_pointers < 12; index_pointers++) {
         //cheking if the pointer is different than 0
         if (inode.i_block[index_pointers] != 0) {
-            indexnotzero++;
             dir_offset = getBlockOffset(inode.i_block[index_pointers], block_size);
             size = 0;
             //getting the directory entry
@@ -231,8 +230,9 @@ bool lookForFile(int fd, struct Ext2_inode inode, char *fileName, unsigned int b
             while (size < inode.i_size) {
                 //cheking if the entry is a file or a directory
                 if (EXT2_FT_REG_FILE == dirEntry.file_type) {
-                    printf("%s\n", dirEntry.name);
-                    found = checkFile(fd, fileName, dirEntry, block_size);
+                    if (checkFile(fd, fileName, dirEntry, block_size)){
+                        return true;
+                    }
                 } else if (EXT2_FT_DIR == dirEntry.file_type) {
                     //searchDirectory
                 }
@@ -244,37 +244,33 @@ bool lookForFile(int fd, struct Ext2_inode inode, char *fileName, unsigned int b
             }
         }
     }
-    return found;
+    return false;
 }
 
 
-/*
+/**
 This function tries to find the file given the filename inside an ext2 filesystem
 */
 void find_Ext2(int fd, char *fileName) {
     int block_size;
 
     //first read block size from the superblock
-    lseek(fd, SUPERBLOCK_OFFSET + 24, SEEK_SET);
+    lseek(fd, SUPERBLOCK_OFFSET + S_LOG_BLOCK_SIZE, SEEK_SET);
     read(fd, &block_size, sizeof(int));
     //calculate block size so we can go to the block descriptor table
     block_size = SUPERBLOCK_OFFSET << block_size;
-    printf("%s %d\n", SIZE_BLOCKS, SUPERBLOCK_OFFSET << block_size);
 
     //once in the block descriptor table we obtain the inode table
     lseek(fd, SUPERBLOCK_OFFSET + BG_INODE_TABLE + block_size, SEEK_SET);
     read(fd, &inode_table, sizeof(int));
-    printf("inodes table %d\n", inode_table);
 
     //we also have to read the s_inodes_per_group
     lseek(fd, SUPERBLOCK_OFFSET + EXT2_INODES_PER_GROUP_OFFSET, SEEK_SET);
     read(fd, &s_inodes_per_group, sizeof(int));
-    printf("inodes per group %u\n", s_inodes_per_group);
 
     //we also have to read the s_blocks_per_group
     lseek(fd, SUPERBLOCK_OFFSET + EXT2_BLOCKS_PER_GROUP_OFFSET, SEEK_SET);
     read(fd, &s_blocks_per_group, sizeof(int));
-    printf("%s %u\n", GROUP_BLOCKS, s_blocks_per_group);
 
     // Get the root inode
     struct Ext2_inode inode = getInode(fd, ROOT_INODE, block_size);
@@ -282,6 +278,9 @@ void find_Ext2(int fd, char *fileName) {
     //check if the inode is a directory
     if (S_ISDIR(inode.i_mode)) {
         //now we have to look for the file inside the root directory
-        lookForFile(fd, inode, fileName, block_size);
+        if(!lookForFile(fd, inode, fileName, block_size)){
+            //if we have not found the file print an error message
+            printaColors(BOLDRED,EXT_FILE_NOT_FOUND);
+        }
     }
 }

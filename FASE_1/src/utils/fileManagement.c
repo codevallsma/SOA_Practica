@@ -63,14 +63,13 @@ void read_file_volume_info(int fd){
  */
 void findFileInVolume(int fd, char* fileName){
   //print the filesystem header
-  printaColors(BLUE, "\n\n\t------ Filesystem Information ------");
+  printaColors(BLUE, "\n\n\t------ Filesystem Finder ------\n");
   //checking if the filesystem is EXT2
   if(isEXT2(fd)){
-      //read ext2 information
+      //find ext2 filename
       find_Ext2(fd, fileName);
   } else if(isFAT16(fd)){
-      //read fat16 information
-      //showFAT16info(fd);
+      //find fat16 filename
   } else {
     //filesystem not ext2 or fat16
     printaColors(MAGENTA, "Sistema d’arxius no és ni EXT2 ni FAT16.");
