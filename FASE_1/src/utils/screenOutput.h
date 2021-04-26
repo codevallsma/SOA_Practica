@@ -26,6 +26,8 @@
 #define MSG_ERR_COM			"Comunication error!.\n"
 #define SEND_DATA "Sending data...\n"
 #define DATA_SENT "Data sent\n"
+#define EXT_FILE_NOT_FOUND "\tError. Fitxer no trobat.\n"
+#define FILE_FOUND "\tFitxer trobat. Ocupa "
 
 void printaColors(char*color, char* frase );
 void printaColorsFloat(char*color, float frase);

@@ -53,3 +53,27 @@ void read_file_volume_info(int fd){
   }
 
 }
+
+/**
+ * @brief Function that checks the file system detects if the file is
+ * fat32 or ext2 and displays its correspondant information
+ *
+ * @param  fd: the file descriptor of the volume to be inspected
+ * @retval fd : file descriptor
+ */
+void findFileInVolume(int fd, char* fileName){
+  //print the filesystem header
+  printaColors(BLUE, "\n\n\t------ Filesystem Information ------");
+  //checking if the filesystem is EXT2
+  if(isEXT2(fd)){
+      //read ext2 information
+      find_Ext2(fd, fileName);
+  } else if(isFAT16(fd)){
+      //read fat16 information
+      //showFAT16info(fd);
+  } else {
+    //filesystem not ext2 or fat16
+    printaColors(MAGENTA, "Sistema d’arxius no és ni EXT2 ni FAT16.");
+  }
+
+}
