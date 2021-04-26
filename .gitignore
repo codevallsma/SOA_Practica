@@ -47,6 +47,10 @@ shooter
 .vscode
 cmake-build-debug/
 CMakeLists.txt
+.idea/
+../CMakeLists.txt
+../Ext2
+../cmake-build-debug/
 
 # Debug files
 *.dSYM/
