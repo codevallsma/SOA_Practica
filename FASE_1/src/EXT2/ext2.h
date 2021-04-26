@@ -6,11 +6,11 @@
 #define S_LOG_BLOCK_SIZE 24
 #define BG_INODE_TABLE 8
 #define EXT2_NAME_LENGTH 255
-#define	EXT2_NDIR_BLOCKS	12                      /* number of direct blocks */
-#define	EXT2_IND_BLOCK		EXT2_NDIR_BLOCKS        /* single indirect block   */
-#define	EXT2_DIND_BLOCK		(EXT2_IND_BLOCK + 1)    /* double indirect block, one level to get to the information  */
-#define	EXT2_TIND_BLOCK		(EXT2_DIND_BLOCK + 1)   /* triple indirect block, two keveks to get to the information  */
-#define	EXT2_N_BLOCKS		(EXT2_TIND_BLOCK + 1)    /* 15 in total the last one points a group that points to groups that point to other groups*/
+#define    EXT2_NDIR_BLOCKS    12                      /* number of direct blocks */
+#define    EXT2_IND_BLOCK        EXT2_NDIR_BLOCKS        /* single indirect block   */
+#define    EXT2_DIND_BLOCK        (EXT2_IND_BLOCK + 1)    /* double indirect block, one level to get to the information  */
+#define    EXT2_TIND_BLOCK        (EXT2_DIND_BLOCK + 1)   /* triple indirect block, two keveks to get to the information  */
+#define    EXT2_N_BLOCKS        (EXT2_TIND_BLOCK + 1)    /* 15 in total the last one points a group that points to groups that point to other groups*/
 #define EXT2_INODES_PER_GROUP_OFFSET 40
 #define EXT2_BLOCKS_PER_GROUP_OFFSET 32
 #define EXT2_FT_REG_FILE 1
@@ -43,6 +43,7 @@
 
 #include "../utils/generalLibreries.h"
 #include "../utils/screenOutput.h"
+#include "../utils/Utils.h"
 #include <time.h>
 #include <string.h>
 #include <stdint.h>
@@ -59,38 +60,41 @@ typedef unsigned int __u32;
 
 
 struct Ext2_inode {
-    __u16   i_mode;         /* File type and access rights */
-    __u16   i_uid;          /* Low 16 bits of Owner Uid */
-    __u32   i_size;         /* Size in bytes */
-    __u32   i_atime;        /* Access time */
-    __u32   i_ctime;        /* Creation time */
-    __u32   i_mtime;        /* Modification time */
-    __u32   i_dtime;        /* Deletion Time */
-    __u16   i_gid;          /* Low 16 bits of Group Id */
-    __u16   i_links_count;  /* Links count */
-    __u32   i_blocks;       /* Blocks count */
-    __u32   i_flags;        /* File flags */
-	__u32	i_osd1;
-	__u32   i_block[EXT2_N_BLOCKS];  /* Pointers to blocks */
-	__u32	i_generation;
-	__u32	i_file_acl;
-	__u32	i_dir_acl;
-	__u32	i_faddr;
-	__u32	i_osd2[3];
+    __u16 i_mode;         /* File type and access rights */
+    __u16 i_uid;          /* Low 16 bits of Owner Uid */
+    __u32 i_size;         /* Size in bytes */
+    __u32 i_atime;        /* Access time */
+    __u32 i_ctime;        /* Creation time */
+    __u32 i_mtime;        /* Modification time */
+    __u32 i_dtime;        /* Deletion Time */
+    __u16 i_gid;          /* Low 16 bits of Group Id */
+    __u16 i_links_count;  /* Links count */
+    __u32 i_blocks;       /* Blocks count */
+    __u32 i_flags;        /* File flags */
+    __u32 i_osd1;
+    __u32 i_block[EXT2_N_BLOCKS];  /* Pointers to blocks */
+    __u32 i_generation;
+    __u32 i_file_acl;
+    __u32 i_dir_acl;
+    __u32 i_faddr;
+    __u32 i_osd2[3];
 };
 
 struct Ext2_dir_entry {
-	__u32	inode;			/* Inode number */
-	__u16	rec_len;		/* Directory entry length */
-	__u8	name_len;		/* Name length */
-	__u8	file_type;
-	char	name[EXT2_NAME_LENGTH];	/* File name */
+    __u32 inode;            /* Inode number */
+    __u16 rec_len;        /* Directory entry length */
+    __u8 name_len;        /* Name length */
+    __u8 file_type;
+    char name[EXT2_NAME_LENGTH];    /* File name */
 };
+
 //info
 int isEXT2(int fd);
+
 void showEXT2info(int fd);
+
 //find
-void find_Ext2(int fd, char* fileName);
+void find_Ext2(int fd, char *fileName);
 
 
 #endif

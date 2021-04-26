@@ -8,8 +8,8 @@
  * @param  charReadUntil: character end
  * @retval int read
  */
-int readUntilAtoiAndFree(int file, char charReadUntil){
-    char* string = readUntil(file,charReadUntil);
+int readUntilAtoiAndFree(int file, char charReadUntil) {
+    char *string = readUntil(file, charReadUntil);
     int valor = atoi(string);
     free(string);
     return valor;
@@ -23,16 +23,16 @@ int readUntilAtoiAndFree(int file, char charReadUntil){
  * @param  end: character end
  * @retval content that has been read
  */
-char* readUntil(int fd, char end) {
+char *readUntil(int fd, char end) {
     int i = 0;
     char c = '\0';
-    char* string = (char*)malloc(sizeof(char));
+    char *string = (char *) malloc(sizeof(char));
     int status = 1;
 
     while (c != end && status != 0) {
         status = read(fd, &c, sizeof(char));
         if (c != end) {
-            string = (char*)realloc(string, sizeof(char) * (i + 2));
+            string = (char *) realloc(string, sizeof(char) * (i + 2));
             string[i] = c;
         }
         i++;
@@ -50,7 +50,7 @@ char* readUntil(int fd, char end) {
  * @retval float read from file
  */
 float readFloat(int file, char charReadUntil) {
-    char* string = readUntil(file,charReadUntil);
+    char *string = readUntil(file, charReadUntil);
     float valor = atof(string);
     free(string);
     return valor;
@@ -63,17 +63,17 @@ float readFloat(int file, char charReadUntil) {
  * @param  size: size to read
  * @retval content read
  */
-char* readUntilNoMore(int fd, int * size) {
+char *readUntilNoMore(int fd, int *size) {
     int i = 0;
     char c = '\0';
-    char* string = (char*)malloc(sizeof(char));
+    char *string = (char *) malloc(sizeof(char));
 
     while (read(fd, &c, sizeof(char)) != 0) {
-        string = (char*)realloc(string, sizeof(char) * (i + 2));
+        string = (char *) realloc(string, sizeof(char) * (i + 2));
         string[i] = c;
         i++;
     }
-    *size =i;
+    *size = i;
     string[i - 1] = '\0';
     return string;
 }
@@ -84,8 +84,8 @@ char* readUntilNoMore(int fd, int * size) {
  * @param  s: char*
  * 
  */
-void toLower(char* s) {
-    for(char *p=s; *p; p++) *p=tolower(*p);
+void toLower(char *s) {
+    for (char *p = s; *p; p++) *p = tolower(*p);
 }
 
 /**
@@ -95,16 +95,16 @@ void toLower(char* s) {
  * @param  base: base
  * @retval char* of int
  */
-char* itoaCustom(int val, int base){
+char *itoaCustom(int val, int base) {
 
-	static char buf[32] = {0};
-	int i = 30;
+    static char buf[32] = {0};
+    int i = 30;
 
-	for(; val && i ; --i, val /= base)
+    for (; val && i; --i, val /= base)
 
-		buf[i] = "0123456789abcdef"[val % base];
+        buf[i] = "0123456789abcdef"[val % base];
 
-	return &buf[i+1];
+    return &buf[i + 1];
 
 }
 
@@ -118,12 +118,18 @@ char* itoaCustom(int val, int base){
  * 
  */
 void copyContentArray(char destinationArr[], char sourceArr[], int shortestSize, int longestSize) {
-    for (int i=0; i < longestSize ; i++) {
-        if(i<shortestSize){
+    for (int i = 0; i < longestSize; i++) {
+        if (i < shortestSize) {
             destinationArr[i] = sourceArr[i];
         } else {
             destinationArr[i] = '\0';
         }
+    }
+}
+
+void fill_delimiter(char arr[], int size) {
+    for (int i = 0; i < size; i++) {
+        arr[i] = '\0';
     }
 }
 
