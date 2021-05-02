@@ -70,6 +70,7 @@ void findFileInVolume(int fd, char* fileName){
       find_Ext2(fd, fileName);
   } else if(isFAT16(fd)){
       //find fat16 filename
+      FAT_find(fd,fileName);
   } else {
     //filesystem not ext2 or fat16
     printaColors(MAGENTA, "Sistema d’arxius no és ni EXT2 ni FAT16.");
