@@ -43,22 +43,32 @@ char *readUntil(int fd, char end) {
 }
 
 /**
- * @brief  Reads float from file
- *    
- * @param  file: file descriptor
- * @param  charReadUntil: character until where it has to read
- * @retval float read from file
+ * Recieves an static array and fills it until it finds a character or reaches the length of the char array
+ * @param fd : the file descriptor
+ * @param staticArray : The array to be filled
+ * @param end : The character that limits until where we have to read
  */
-float readFloat(int file, char charReadUntil) {
-    char *string = readUntil(file, charReadUntil);
-    float valor = atof(string);
-    free(string);
-    return valor;
+void readUntilStatic(int fd, u_char staticArray[], int totalSize, char end){
+    int i = 0;
+    char c = '\0';
+    int status = 1;
+
+    while (c != end && status != 0 && i<totalSize) {
+        status = read(fd, &c, sizeof(char));
+        if (c != end) {
+            staticArray[i] = c;
+        } else{
+            //we found the char delimitter
+            status =0;
+        }
+        i++;
+    }
+    staticArray[i-1] = '\0';
 }
 
 /**
  * @brief  Reads until a concrete size from the file descriptor
- * 
+ *
  * @param  fd: file descriptor
  * @param  size: size to read
  * @retval content read
@@ -76,6 +86,20 @@ char *readUntilNoMore(int fd, int *size) {
     *size = i;
     string[i - 1] = '\0';
     return string;
+}
+
+/**
+ * @brief  Reads float from file
+ *
+ * @param  file: file descriptor
+ * @param  charReadUntil: character until where it has to read
+ * @retval float read from file
+ */
+float readFloat(int file, char charReadUntil) {
+    char *string = readUntil(file, charReadUntil);
+    float valor = atof(string);
+    free(string);
+    return valor;
 }
 
 /**
