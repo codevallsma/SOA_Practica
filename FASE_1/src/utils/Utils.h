@@ -13,10 +13,10 @@
 
 int readUntilAtoiAndFree(int file, char charReadUntil);
 char* readUntil(int fd, char end);
+void readUntilStatic(int fd, u_char staticArray[], int totalSIze, char end);
 char* readUntilNoMore(int fd, int * size);
 char* itoaCustom(int val, int base);
 float readFloat(int file, char charReadUntil);
 void copyContentArray(char destinationArr[], char sourceArr[], int shortestSize, int longestSize);
 void toLower(char* s);
-
 #endif

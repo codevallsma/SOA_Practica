@@ -18,7 +18,7 @@
 #define ERR_ARGS    BOLDRED "Error, missing arguments.\nUsage: ./" PROGRAM_NAME " " PROG_ARGUMENTS  "\n" RESET
 #define MSG_MAIN    BOLDGREEN "Message from main %d" RESET " \n"
 #define ERR_FILE_R  "Error when reading the file "
-#define ARG_ERROR "Error, missing arguments."
+#define ARG_ERROR "\n\n\tError. Nombre de paràmetres incorrecte.\n\n"
 #define NO_DIRECTORY_FOUND "Cannot open directory"
 #define FILES_FOUND "%d files found\n"
 #define MSG_ERR_SOCKET      "Error while creating the socket connection.\n"
@@ -26,6 +26,8 @@
 #define MSG_ERR_COM			"Comunication error!.\n"
 #define SEND_DATA "Sending data...\n"
 #define DATA_SENT "Data sent\n"
+#define EXT_FILE_NOT_FOUND "\tError! Fitxer no trobat al directori arrel del sistema de fitxers.\n"
+#define FILE_FOUND "\tFitxer trobat. Ocupa "
 
 void printaColors(char*color, char* frase );
 void printaColorsFloat(char*color, float frase);

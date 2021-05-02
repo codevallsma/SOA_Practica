@@ -10,5 +10,5 @@
 
 int readFileName(char* filename);
 void read_file_volume_info(int fd);
-
+void findFileInVolume(int fd, char* fileName);
 #endif
