@@ -173,7 +173,7 @@ void seekFile(int fd, char *fileToFind, uint rootDirOffset){
             if(readAndCompareIfEqual(fd, rootDirOffset, &entry, fileToFind)){
                 uint filesize = getFileSize(fd, rootDirOffset);
                 char *buffer;
-                asprintf(&buffer, "La mida del fitxer trobat es de %u bytes", filesize);
+                asprintf(&buffer, "\tFitxer trobat. Ocupa %u bytes\n\n", filesize);
                 printaColors(BOLDGREEN, buffer);
                 free(buffer);
                 return;
@@ -182,7 +182,7 @@ void seekFile(int fd, char *fileToFind, uint rootDirOffset){
         // Get the next directory entry
         rootDirOffset = rootDirOffset+ DIRECTORY_ENTRY_SIZE;
     }while(entry.attributes!=0);
-    printaColors(BOLDRED,"FILE NOT FOUND INSIDE THE FAT16 FILESYSTEM!");
+    printaColors(BOLDRED,"\tFILE NOT FOUND INSIDE THE FAT16 FILESYSTEM!\n\n");
 }
 
 /**
