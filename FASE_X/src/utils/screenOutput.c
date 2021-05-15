@@ -14,6 +14,18 @@ void printaNumFiles(int numFiles) {
 }
 
 /**
+ * Prints the filename path
+ * @param path
+ * @param num_of_subdirs
+ */
+void printPaths(char** path, char* filename,  uint num_of_subdirs){
+    printf("\tPATH OF THE FILE: ");
+    for(uint i =num_of_subdirs; i>0 ; i--){
+        printf("%s/", path[i-1]);
+    }
+    printf("%s\n\n", filename);
+}
+/**
  * @brief Prints message with a specific color
  * 
  * @param  frase: message that will be printed
@@ -83,9 +95,9 @@ void showFiles(int numFiles, char** files) {
 }
 
 /**
- * @brief  Prints directory not found message in red
+ * @brief  Prints directoryPath not found message in red
  * 
- * @param  path: directory path
+ * @param  path: directoryPath path
  * 
  */
 void printNoDirectory(const char* path) {
