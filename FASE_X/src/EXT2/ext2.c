@@ -148,7 +148,7 @@ unsigned int getBlockOffset(unsigned int block, unsigned int block_size) {
 /**
 Function that reads the correspondant inode given the inode number
 */
-struct Ext2_inode getInode(int fd, int inode_num, unsigned int block_size) {
+struct Ext2_inode getInode(int fd, unsigned int inode_num, unsigned int block_size) {
     //we have to know the group of the inode
     //block group, page 22 pdf ext2
     unsigned int block_group = (inode_num - 1) / s_inodes_per_group;
@@ -230,11 +230,22 @@ bool lookForFile(int fd, struct Ext2_inode inode, char *fileName, unsigned int b
             while (size < inode.i_size) {
                 //cheking if the entry is a file or a directory
                 if (EXT2_FT_REG_FILE == dirEntry.file_type) {
+                    //checking if the filename is the same as the one we are looking for
                     if (checkFile(fd, fileName, dirEntry, block_size)){
                         return true;
                     }
+                //checking if the file we found is a directory
                 } else if (EXT2_FT_DIR == dirEntry.file_type) {
                     //searchDirectory
+                    if (dirEntry.name[0] != '.') {
+                        //getting the inode for the corresponding dir entry
+                        struct Ext2_inode inodeAux = getInode(fd, dirEntry.inode, block_size);
+                        //doing a recursive call to examine the next inode block
+                        if (lookForFile(fd, inodeAux, fileName, block_size)) {
+                            //returning true if the file was found
+                            return true;
+                        }
+                    }
                 }
                 //the rec_len is the size of the current directory so for the next dir, we have to move rec_len bytes to start reading
                 dir_offset += dirEntry.rec_len;
