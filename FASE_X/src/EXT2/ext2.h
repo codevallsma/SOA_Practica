@@ -44,6 +44,7 @@
 #include "../utils/generalLibreries.h"
 #include "../utils/screenOutput.h"
 #include "../utils/Utils.h"
+#include "../utils/pathManager.h"
 #include <time.h>
 #include <string.h>
 #include <stdint.h>

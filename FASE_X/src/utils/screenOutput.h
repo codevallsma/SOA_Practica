@@ -36,5 +36,10 @@ void printaNumFiles(int numFiles);
 void printItoa(char* color, int num);
 void printNoDirectory(const char* path);
 void showFiles(int numFiles, char** files);
-
+/**
+ * Prints the filename path
+ * @param path
+ * @param num_of_subdirs
+ */
+void printPaths(char** path, char* filename, uint num_of_subdirs);
 #endif

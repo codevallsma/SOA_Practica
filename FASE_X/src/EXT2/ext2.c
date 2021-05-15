@@ -137,7 +137,7 @@ void showEXT2info(int fd) {
 unsigned int inode_table;
 unsigned int s_inodes_per_group;
 unsigned int s_blocks_per_group;
-
+uint num_of_subdirs =0;
 /**
 Given a block size and the block number we can work out the position of the next block
 */
@@ -148,7 +148,7 @@ unsigned int getBlockOffset(unsigned int block, unsigned int block_size) {
 /**
 Function that reads the correspondant inode given the inode number
 */
-struct Ext2_inode getInode(int fd, int inode_num, unsigned int block_size) {
+struct Ext2_inode getInode(int fd, unsigned int inode_num, unsigned int block_size) {
     //we have to know the group of the inode
     //block group, page 22 pdf ext2
     unsigned int block_group = (inode_num - 1) / s_inodes_per_group;
@@ -171,20 +171,17 @@ struct Ext2_inode getInode(int fd, int inode_num, unsigned int block_size) {
 * Read file name and compare if it's the same name as the user's input
 */
 int checkFile(int volume, char *userFile, struct Ext2_dir_entry entry, unsigned int block_size) {
-
-    // Read directoy's name
-    char file_name[EXT2_NAME_LENGTH + 1];
-    memcpy(file_name, entry.name, entry.name_len);
-    file_name[entry.name_len] = '\0';              /* append null char to the file name */
-
-    if (!strcmp(userFile, file_name)) {
+    //comparing if the filenames are the same
+    if (!strcmp(userFile, entry.name)) {
+        //getting the inode of the filename found
         struct Ext2_inode nextInode = getInode(volume, entry.inode, block_size);
+        //printing size in bytes
         printf("%s %u bytes.\n\n", FILE_FOUND, nextInode.i_size);
         return true;
     }
-
     return false;
 }
+
 /**
  * Returns an entry of the file system given the offset in bytes
  * @param volumeFd : the file descriptor of the volume
@@ -196,7 +193,7 @@ struct Ext2_dir_entry getEntry(int volumeFd, unsigned int offset) {
     //reading the inode first
     lseek(volumeFd, offset, SEEK_SET);
     read(volumeFd, &entry.inode, 4);
-    //we have to read the directory length
+    //we have to read the directoryPath length
     read(volumeFd, &entry.rec_len, 2);
     //we also have to read the name length
     read(volumeFd, &entry.name_len, 1);
@@ -205,38 +202,51 @@ struct Ext2_dir_entry getEntry(int volumeFd, unsigned int offset) {
     //filling the array with \0
     memset(entry.name,'\0',EXT2_NAME_LENGTH);
     //finally reading the file name
-    read(volumeFd, entry.name, entry.name_len);
+    readUntilStatic(volumeFd,entry.name, entry.name_len+1, 32);
 
     //returning the entry value
     return entry;
 }
-
 /**
-This function looks for the fileName given by parameters and returns true if it exists in the root directory of ext2
+This function looks for the fileName given by parameters and returns true if it exists in the root directoryPath of ext2
 */
-bool lookForFile(int fd, struct Ext2_inode inode, char *fileName, unsigned int block_size) {
+bool lookForFile(int fd, struct Ext2_inode inode, char *fileName, unsigned int block_size, char*** paths) {
     struct Ext2_dir_entry dirEntry;
     uint32_t size;
     uint32_t dir_offset;
-    //we have to read each directory entry of the root Directory
+    //we have to read each directoryPath entry of the root Directory
     for (int index_pointers = 0; index_pointers < 12; index_pointers++) {
         //cheking if the pointer is different than 0
         if (inode.i_block[index_pointers] != 0) {
             dir_offset = getBlockOffset(inode.i_block[index_pointers], block_size);
             size = 0;
-            //getting the directory entry
+            //getting the directoryPath entry
             dirEntry = getEntry(fd, dir_offset);
             //looping inside the data block to find all the directories
             while (size < inode.i_size) {
-                //cheking if the entry is a file or a directory
+                //cheking if the entry is a file or a directoryPath
                 if (EXT2_FT_REG_FILE == dirEntry.file_type) {
+                    //checking if the filename is the same as the one we are looking for
                     if (checkFile(fd, fileName, dirEntry, block_size)){
                         return true;
                     }
+                //checking if the file we found is a directoryPath
                 } else if (EXT2_FT_DIR == dirEntry.file_type) {
                     //searchDirectory
+                    if (dirEntry.name[0] != '.') {
+                        //getting the inode for the corresponding dir entry
+                        struct Ext2_inode inodeAux = getInode(fd, dirEntry.inode, block_size);
+                        //doing a recursive call to examine the next inode block
+                        if (lookForFile(fd, inodeAux, fileName, block_size, paths)) {
+                            //copying subidirs
+                            *paths = copyDirPaths(dirEntry.name, *paths, &num_of_subdirs);
+                            //returning true if the file was found
+                            return true;
+                        }
+
+                    }
                 }
-                //the rec_len is the size of the current directory so for the next dir, we have to move rec_len bytes to start reading
+                //the rec_len is the size of the current directoryPath so for the next dir, we have to move rec_len bytes to start reading
                 dir_offset += dirEntry.rec_len;
                 size += dirEntry.rec_len;
                 //get the next entry
@@ -253,7 +263,7 @@ This function tries to find the file given the filename inside an ext2 filesyste
 */
 void find_Ext2(int fd, char *fileName) {
     int block_size;
-
+    char** paths;
     //first read block size from the superblock
     lseek(fd, SUPERBLOCK_OFFSET + S_LOG_BLOCK_SIZE, SEEK_SET);
     read(fd, &block_size, sizeof(int));
@@ -275,12 +285,18 @@ void find_Ext2(int fd, char *fileName) {
     // Get the root inode
     struct Ext2_inode inode = getInode(fd, ROOT_INODE, block_size);
 
-    //check if the inode is a directory
+    //number of subdirectories
+    num_of_subdirs = 0;
+
+    //check if the inode is a directoryPath
     if (S_ISDIR(inode.i_mode)) {
-        //now we have to look for the file inside the root directory
-        if(!lookForFile(fd, inode, fileName, block_size)){
+        //now we have to look for the file inside the root directoryPath
+        if(!lookForFile(fd, inode, fileName, block_size, &paths)){
             //if we have not found the file print an error message
             printaColors(BOLDRED,EXT_FILE_NOT_FOUND);
+        } else {
+            printPaths(paths,fileName,num_of_subdirs);
+            freePath(paths, num_of_subdirs);
         }
     }
 }
