@@ -170,7 +170,14 @@ bool compareFilenames(Fat16Entry *entry, char *fileNameToSeek) {
         return strcmp(fileNameToSeek, entry->filename) == 0;
     }
 }
-
+u_char* manageExtension(Fat16Entry entry, u_char fullFilename[FILENAME_SIZE + EXTENSION_SIZE + 2]){
+    strcpy(fullFilename, entry.filename);
+    int midaFullname = strlen(fullFilename);
+    fullFilename[midaFullname++] = '.';
+    fullFilename[midaFullname++] = '\0';
+    strcat(fullFilename, entry.ext);
+    return fullFilename;
+}
 /**
  * Seeks for the filename desired by the user in the filesystem
  * @param fd: the file descriptor of the file system
@@ -194,11 +201,17 @@ seekFile(int fd, char *fileToFind, uint32_t dirOffset, Fat16BootSector bS, unsig
                 return true;
             }
         } else if (entry.attributes == ATTR_DIR && strcmp(entry.filename, ".") && strcmp(entry.filename, "..")) {
-            if (seekFile(fd, fileToFind,
-                         (unsigned int) ((entry.starting_cluster - 2) * bS.sectPerCluster * bS.sectorSize) +
-                         firstDataSector, bS, firstDataSector, path)) {
+            if (seekFile(fd, fileToFind,(unsigned int) ((entry.starting_cluster - 2) * bS.sectPerCluster * bS.sectorSize) +firstDataSector, bS, firstDataSector, path)) {
                 //store file path
-                *path = copyDirPaths(entry.filename, *path, &num_of_subdirsFAT);
+                if(strlen(entry.ext)>0){
+                    //if the path has an extension we add it in the path
+                    u_char fullFilename[FILENAME_SIZE + EXTENSION_SIZE + 2];
+                    manageExtension(entry,fullFilename);
+                    *path = copyDirPaths(fullFilename, *path, &num_of_subdirsFAT);
+                }else {
+                    //if the file has no extension we store the path as the filename
+                    *path = copyDirPaths(entry.filename, *path, &num_of_subdirsFAT);
+                }
                 return true;
             }
         }
