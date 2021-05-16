@@ -19,4 +19,5 @@ char* itoaCustom(int val, int base);
 float readFloat(int file, char charReadUntil);
 void copyContentArray(char destinationArr[], char sourceArr[], int shortestSize, int longestSize);
 void toLower(char* s);
+void toUpper(char *s);
 #endif

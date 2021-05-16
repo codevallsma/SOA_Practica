@@ -113,6 +113,15 @@ void toLower(char *s) {
 }
 
 /**
+ * @brief  Passes to lower case char* passed by parameter
+ *
+ * @param  s: char*
+ *
+ */
+void toUpper(char *s) {
+    for (char *p = s; *p; p++) *p = toupper(*p);
+}
+/**
  * @brief  Function that does an itoa depending on the base
  * 
  * @param  val: int to be passed to char*
