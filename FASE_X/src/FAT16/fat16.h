@@ -36,8 +36,11 @@
 
 #include "../utils/generalLibreries.h"
 #include "../utils/screenOutput.h"
+#include "../utils/pathManager.h"
+
 #include <stdint.h>
-typedef uint16_t WORD;
+#include <stdbool.h>
+
 //https://codeandlife.com/2012/04/02/simple-fat-and-sd-tutorial-part-1/
 typedef struct {
     //THE +1 to include the \0

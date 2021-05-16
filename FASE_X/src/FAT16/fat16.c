@@ -1,4 +1,3 @@
-#include <stdbool.h>
 #include "fat16.h"
 
 /*********************************************** INFO ****************************************************/
@@ -73,7 +72,7 @@ void showFAT16info(int fd) {
 }
 
 /*********************************************** FIND ****************************************************/
-
+uint num_of_subdirsFAT =0;
 /**
  * Reads the most important parts of the boot sector
  * @param fd : The file descriptor of the volume
@@ -128,28 +127,34 @@ uint getFileSize(int volumeFd, int rootDirSec){
  *
  * @return
  */
-bool readAndCompareIfEqual(int volume, uint rootDirOffset, Fat16Entry *entry, char* fileNameToSeek){
+bool readAndCompareIfEqual(int volume, uint dirOffset, Fat16Entry *entry, char* fileNameToSeek){
     u_char fullFilename[FILENAME_SIZE+EXTENSION_SIZE+2];
 
     //setting the pointer of the file to the beggining of the directory
-    lseek(volume, rootDirOffset, SEEK_SET);
+    lseek(volume, dirOffset, SEEK_SET);
     //reading the filename
     readUntilStatic(volume,entry->filename, FILENAME_SIZE+1, 32);
     //reading the attribute of the file/directory
-    lseek(volume, rootDirOffset+DIRECTORY_ATTR_OFFSET, SEEK_SET);
+    lseek(volume, dirOffset+DIRECTORY_ATTR_OFFSET, SEEK_SET);
     read(volume, &(entry->attributes),sizeof(u_char));
     //skipping the bytes that correspond to the filename
-    lseek(volume, rootDirOffset +FILENAME_SIZE, SEEK_SET);
+    lseek(volume, dirOffset +FILENAME_SIZE, SEEK_SET);
     //reading the extension
     readUntilStatic(volume,entry->ext,EXTENSION_SIZE+1, 32);
     //reading starting cluster
-    lseek(volume, rootDirOffset+ DIRECTORY_OFFSET_CLUSTER_LO, SEEK_SET);
+    lseek(volume, dirOffset+ DIRECTORY_OFFSET_CLUSTER_LO, SEEK_SET);
     read(volume,&(entry->starting_cluster), 2 );
     //reading size
-    lseek(volume, rootDirOffset + DIRECTORY_OFFSET_DIR_SIZE, SEEK_SET);
-    read(volume,&(entry->file_size), sizeof(uint));;
-    //setting filename to upper case so we can compare it ignoring cases
-    toUpper(fileNameToSeek);
+    lseek(volume, dirOffset + DIRECTORY_OFFSET_DIR_SIZE, SEEK_SET);
+    read(volume,&(entry->file_size), sizeof(uint));
+    //check if the file contains ~ meaning the filename is larger than 8 characters
+    if(strstr(entry->filename,"~") != NULL){
+        //looking for the position of the array containing ~
+        for(int i =0; i< FILENAME_SIZE+1; i++){
+            //replacing ~ by \0
+            if(entry->filename[i]=='~' && entry->filename[i+1]=='1') entry->filename[i] = '\0';
+        }
+    }
     //does the file have extension?
     if(strlen(entry->ext)>0){
         // it has an extension
@@ -164,21 +169,7 @@ bool readAndCompareIfEqual(int volume, uint rootDirOffset, Fat16Entry *entry, ch
         return strcmp(fileNameToSeek,entry->filename) ==0;
     }
 }
-WORD getClusterValue(int fd, uint16_t cluster,Fat16BootSector bS) {
-    uint32_t FATOffset = cluster * 1;
-    uint32_t ThisFATSecNum = bS.BPB_ResvdSecCnt + (FATOffset / bS.sectorSize);
-    uint32_t ThisFATEntOffset = (FATOffset % bS.sectorSize);
-    uint32_t index = ThisFATSecNum * bS.sectorSize;
 
-    lseek(fd, index, SEEK_SET);
-
-    uint8_t secBuff[8][8];
-    read(fd, secBuff, 8);
-
-    WORD FATClusterValue = *((WORD *) &secBuff[ThisFATEntOffset]);
-
-    return FATClusterValue;
-}
 /**
  *
  * @param fd
@@ -186,7 +177,7 @@ WORD getClusterValue(int fd, uint16_t cluster,Fat16BootSector bS) {
  * @param fileToFind
  * @param rootDirOffset
  */
-bool seekFile(int fd, char *fileToFind, uint32_t rootDirOffset, Fat16BootSector bS, unsigned int firstDataSector){
+bool seekFile(int fd, char *fileToFind, uint32_t rootDirOffset, Fat16BootSector bS, unsigned int firstDataSector,char *** path){
     Fat16Entry entry;
     do{
         bool equal = readAndCompareIfEqual(fd, rootDirOffset, &entry, fileToFind);
@@ -194,22 +185,22 @@ bool seekFile(int fd, char *fileToFind, uint32_t rootDirOffset, Fat16BootSector 
         if(entry.attributes==ATTR_ARCHIVE){
             //reading the filename and the extension
             if(equal){
-                uint filesize = getFileSize(fd, rootDirOffset);
                 char *buffer;
-                asprintf(&buffer, "\tFitxer trobat. Ocupa %u bytes\n\n", filesize);
+                asprintf(&buffer, "\tFitxer trobat. Ocupa %u bytes\n\n", entry.file_size);
                 printaColors(BOLDGREEN, buffer);
                 free(buffer);
                 return true;
             }
         } else if (entry.attributes==ATTR_DIR && strcmp(entry.filename, ".") &&  strcmp(entry.filename, "..")){
-           if(seekFile(fd, fileToFind, (unsigned  int)((entry.starting_cluster-2)*bS.sectPerCluster*bS.sectorSize) + firstDataSector, bS, firstDataSector)){
+           if(seekFile(fd, fileToFind, (unsigned  int)((entry.starting_cluster-2)*bS.sectPerCluster*bS.sectorSize) + firstDataSector, bS, firstDataSector, path)){
                //store file path
+              *path =  copyDirPaths(entry.filename, *path, &num_of_subdirsFAT);
+               return true;
            }
         }
         // Get the next directory entry
         rootDirOffset = rootDirOffset+ DIRECTORY_ENTRY_SIZE;
     }while(entry.attributes!=0);
-    printaColors(BOLDRED,"\tFILE NOT FOUND INSIDE THE FAT16 FILESYSTEM!\n\n");
     return false;
 }
 
@@ -224,6 +215,15 @@ void FAT_find(int fd, char *fileToFind) {
     unsigned int rootDirSec = (bS.BPB_ResvdSecCnt + (bS.numFats * bS.BPB_FATsz16)) * bS.sectorSize;
     unsigned int rootDirSectors = (unsigned int) ((bS.maxRootEntries * DIRECTORY_ENTRY_SIZE) + (bS.sectorSize-1)) / bS.sectorSize;
     unsigned int firstDataSector  = rootDirSec + rootDirSectors*bS.sectorSize;
+    //setting filename to upper case so we can compare it ignoring cases
+    toUpper(fileToFind);
+    char ** path;
     //seek the file to be found
-    seekFile(fd,fileToFind, rootDirSec, bS, firstDataSector);
+    if(seekFile(fd,fileToFind, rootDirSec, bS, firstDataSector, &path)){
+        //file found
+        printPaths(path,fileToFind,num_of_subdirsFAT);
+        freePath(path, num_of_subdirsFAT);
+    } else {
+        printaColors(BOLDRED,"\tFILE NOT FOUND INSIDE THE FAT16 FILESYSTEM!\n\n");
+    }
 }
