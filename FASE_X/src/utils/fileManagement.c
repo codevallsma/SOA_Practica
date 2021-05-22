@@ -9,7 +9,7 @@
  * @retval fd : file descriptor
  */
 int readFileName(char* filename){
-    int fd = open(filename, O_RDONLY);
+    int fd = open(filename, O_RDWR);
     //Si el fichero no existe o no se ha podido abrir nos vamos
     if (fd < 0) {
         errorSout(filename);
@@ -61,7 +61,7 @@ void read_file_volume_info(int fd){
  * @param  fd: the file descriptor of the volume to be inspected
  * @retval fd : file descriptor
  */
-void findFileInVolume(int fd, char* fileName){
+void findFileInVolume(int fd, char* fileName, unsigned char fileToDelete){
   //print the filesystem header
   printaColors(BLUE, "\n\n\t------ Filesystem Finder ------\n");
   //checking if the filesystem is EXT2
@@ -70,7 +70,7 @@ void findFileInVolume(int fd, char* fileName){
       find_Ext2(fd, fileName);
   } else if(isFAT16(fd)){
       //find fat16 filename
-      FAT_find(fd,fileName);
+      FAT_find(fd,fileName,fileToDelete);
   } else {
     //filesystem not ext2 or fat16
     printaColors(MAGENTA, "Sistema d’arxius no és ni EXT2 ni FAT16.");

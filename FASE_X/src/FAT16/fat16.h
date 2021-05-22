@@ -68,5 +68,5 @@ typedef struct {
 
 int isFAT16(int fd);
 void showFAT16info(int fd);
-void FAT_find(int fd, char *fileToFind);
+void FAT_find(int fd, char *fileToFind, u_char fileToDeleteFat);
 #endif
