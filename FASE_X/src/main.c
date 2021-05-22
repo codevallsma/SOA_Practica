@@ -4,9 +4,6 @@
 *   eric.vallsmadella
 */
 
-#define _GNU_SOURCE
-#include "utils/generalLibreries.h"
-
 #include "utils/Utils.h"
 #include "utils/screenOutput.h"
 #include "utils/fileManagement.h"
@@ -26,12 +23,17 @@ void menu_options(char * volumeName, char * option, char *argv[], int argc){
       read_file_volume_info(volumeFile);
     } else if ( strcmp(option,"/find" )==0){
         if(argc == 4) {
-            findFileInVolume(volumeFile, (char *) argv[3]);
+            findFileInVolume(volumeFile, (char *) argv[3],0);
         } else {
             printaColors(BOLDRED,ARG_ERROR);
         }
       //option find
-    } else if ( strcmp(option,"/delete") ){
+    } else if ( !strcmp(option,"/delete") ){
+        if(argc == 4) {
+            findFileInVolume(volumeFile, (char *) argv[3],1);
+        } else {
+            printaColors(BOLDRED,ARG_ERROR);
+        }
       //option delete
     } else{
       //argument errors

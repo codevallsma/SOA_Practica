@@ -70,7 +70,8 @@ void showFAT16info(int fd) {
     read(fd, label, sizeof(label));
     printf("%s %s\n\n", LABEL, label);
 }
-
+/*********************************************** DELETE ****************************************************/
+u_char fileToDelete;
 /*********************************************** FIND ****************************************************/
 uint num_of_subdirsFAT = 0;
 
@@ -194,11 +195,24 @@ seekFile(int fd, char *fileToFind, uint32_t dirOffset, Fat16BootSector bS, unsig
         if (entry.attributes == ATTR_ARCHIVE) {
             //reading the filename and the extension
             if (compareFilenames(&entry, fileToFind)) {
-                char *buffer;
-                asprintf(&buffer, "\tFitxer trobat. Ocupa %u bytes\n\n", entry.file_size);
-                printaColors(BOLDGREEN, buffer);
-                free(buffer);
-                return true;
+                //if the variable fileToDelete is 0 means that the functionality that is it is meant to do is searching the file
+                if(fileToDelete == 0){
+                    //FILE FOUND
+                    char *buffer;
+                    asprintf(&buffer, "\tFitxer trobat. Ocupa %u bytes\n\n", entry.file_size);
+                    printaColors(BOLDGREEN, buffer);
+                    free(buffer);
+                    return true;
+                } else {
+                    //DELETING THE FILE
+                    // Setting first name character to 0xE5
+                    unsigned char resetValue = 0xE5;
+                    lseek(fd, dirOffset, SEEK_SET);
+                    write(fd, &resetValue, 1);
+                    printaColors(BOLDGREEN, "\tSuccesfully deleting the file");
+                    return  true;
+                }
+
             }
         } else if (entry.attributes == ATTR_DIR && strcmp(entry.filename, ".") && strcmp(entry.filename, "..")) {
             if (seekFile(fd, fileToFind,(unsigned int) ((entry.starting_cluster - 2) * bS.sectPerCluster * bS.sectorSize) +firstDataSector, bS, firstDataSector, path)) {
@@ -226,7 +240,8 @@ seekFile(int fd, char *fileToFind, uint32_t dirOffset, Fat16BootSector bS, unsig
  * @param fd : The file descriptor of the volume
  * @param fileToFind: The char* with the name of the file
  */
-void FAT_find(int fd, char *fileToFind) {
+void FAT_find(int fd, char *fileToFind, u_char fileToDeleteFat){
+    fileToDelete = fileToDeleteFat;
     //getting all the information from the boot sector
     Fat16BootSector bS = readFAT16BootSector(fd);
     //calculating the root dir sector value
