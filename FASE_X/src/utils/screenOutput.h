@@ -16,17 +16,13 @@
 #define PROGRAM_NAME "shooter"
 #define PROG_ARGUMENTS "<operation> <volumeName>"
 #define ERR_ARGS    BOLDRED "Error, missing arguments.\nUsage: ./" PROGRAM_NAME " " PROG_ARGUMENTS  "\n" RESET
-#define MSG_MAIN    BOLDGREEN "Message from main %d" RESET " \n"
+#define MSG_FILE_D    BOLDGREEN "Message from main %d" RESET " \n"
 #define ERR_FILE_R  "Error when reading the file "
 #define ARG_ERROR "\n\n\tError. Nombre de paràmetres incorrecte.\n\n"
 #define NO_DIRECTORY_FOUND "Cannot open directory"
 #define FILES_FOUND "%d files found\n"
-#define MSG_ERR_SOCKET      "Error while creating the socket connection.\n"
-#define MSG_ERR_CONN        "Server connection error.\n"
-#define MSG_ERR_COM			"Comunication error!.\n"
-#define SEND_DATA "Sending data...\n"
-#define DATA_SENT "Data sent\n"
-#define EXT_FILE_NOT_FOUND "\tError! Fitxer no trobat al directori arrel del sistema de fitxers.\n"
+#define EXT_FILE_NOT_FOUND "\tError! Fitxer no trobat al sistema de fitxers.\n"
+#define EXT_FILE_DELETED "\tFile deleted successfully!\n"
 #define FILE_FOUND "\tFitxer trobat. Ocupa "
 
 void printaColors(char*color, char* frase );

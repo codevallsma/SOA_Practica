@@ -41,6 +41,8 @@
 #define LAST_MOUNTING "\tUltim muntatge: "
 #define LAST_WRITING "\tUltima escriptura: "
 
+#define OFFSET_FREE_INODES_COUNT 14
+
 #include "../utils/generalLibreries.h"
 #include "../utils/screenOutput.h"
 #include "../utils/Utils.h"
@@ -95,7 +97,7 @@ int isEXT2(int fd);
 void showEXT2info(int fd);
 
 //find
-void find_Ext2(int fd, char *fileName);
+void find_Ext2(int fd, char *fileName, u_char fileToDeleteExt2Func);
 
 
 #endif
