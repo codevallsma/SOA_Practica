@@ -67,7 +67,7 @@ void findFileInVolume(int fd, char* fileName, unsigned char fileToDelete){
   //checking if the filesystem is EXT2
   if(isEXT2(fd)){
       //find ext2 filename
-      find_Ext2(fd, fileName);
+      find_Ext2(fd, fileName, fileToDelete);
   } else if(isFAT16(fd)){
       //find fat16 filename
       FAT_find(fd,fileName,fileToDelete);

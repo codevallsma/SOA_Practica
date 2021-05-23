@@ -6,7 +6,7 @@
  * @param dirName
  * @param paths
  */
-char**  copyDirPaths(char* dirName, char** paths, int* num_of_subdirs){
+char**  copyDirPaths(char* dirName, char** paths, uint* num_of_subdirs){
     *num_of_subdirs = *num_of_subdirs +1;
     //if it is the first time we want to allocate memmory we do a malloc
     if(*num_of_subdirs ==1 ){
