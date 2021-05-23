@@ -16,7 +16,7 @@ In order to execute the program run make on the FASE_X folder and execute the co
 <br>The parameters are used as following:
 
 | PARAMETERS    |                 PHASE 1                |                     PHASE 2                |                 PHASE 3                  |                PHASE 4                    |
-|----------     |:---------------------------------------:|:------------------------------------------:|:----------------------------------------:|: ----------------------------------------:|
+|----------     |:---------------------------------------:|:------------------------------------------:|:----------------------------------------:|:----------------------------------------:|
 | \<operacio\>  | /info                                  |  /find                                     | /find                                    | /delete                                   |
 | \<nom_volum\> | The volume name that we want to read   |   Same as Phase 1                          |  Same as Phase 1                         |  Same as Phase 1                          |
 | \<nom_arxiu\> | Not available for phase 1              |   File name to be seeked inside the volume |  File name to be seeked inside the volume|  File name to be deleted inside the volume|
