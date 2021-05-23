@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-char**  copyDirPaths(char* dirName, char** paths, int* num_of_subdirs);
+char**  copyDirPaths(char* dirName, char** paths, uint* num_of_subdirs);
 void freePath(char** paths, uint subdirs);
 
 #endif
