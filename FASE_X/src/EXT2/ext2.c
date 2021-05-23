@@ -95,9 +95,7 @@ void showEXT2_BlockInfo(int fd) {
 * Read and print to the screen volume's information
 */
 void showEXT2_VolumeInfo(int fd) {
-
     time_t time;
-
     printaColors(BOLDGREEN, INFO_VOLUME);
     // VOLUME NAME
     char name[16];
@@ -131,14 +129,19 @@ void showEXT2info(int fd) {
     showEXT2_VolumeInfo(fd);
     printf("\n\n");
 }
+
 /******************************************************** DELETE *************************************************************/
+
 u_char fileToDeleteExt2;
+
 /******************************************************** FIND *************************************************************/
+
 //global variables
 unsigned int inode_table;
 unsigned int s_inodes_per_group;
 unsigned int s_blocks_per_group;
-uint num_of_subdirs =0;
+uint num_of_subdirs = 0;
+
 /**
 Given a block size and the block number we can work out the position of the next block
 */
@@ -157,7 +160,6 @@ struct Ext2_inode getInode(int fd, unsigned int inode_num, unsigned int block_si
     unsigned int local_inode_index = (inode_num - 1) % s_inodes_per_group;
     //creating variabke inode
     struct Ext2_inode inode;
-
     //calculating the offset for the group
     unsigned int groupPosition = block_group * s_blocks_per_group * block_size;
     //postioning the pointer of the data that we want to read to
@@ -170,24 +172,9 @@ struct Ext2_inode getInode(int fd, unsigned int inode_num, unsigned int block_si
 }
 
 /**
-* Read file name and compare if it's the same name as the user's input
-*/
-int checkFile(int volume, char *userFile, struct Ext2_dir_entry entry, unsigned int block_size) {
-    //comparing if the filenames are the same
-    if (!strcmp(userFile, entry.name)) {
-        //getting the inode of the filename found
-        struct Ext2_inode nextInode = getInode(volume, entry.inode, block_size);
-        //printing size in bytes
-        printf("%s %u bytes.\n\n", FILE_FOUND, nextInode.i_size);
-        return true;
-    }
-    return false;
-}
-
-/**
  * Returns an entry of the file system given the offset in bytes
- * @param volumeFd : the file descriptor of the volume
- * @param offset
+ * @param volumeFd : The file descriptor of the volume
+ * @param offset: THe offset of the directory
  * @return : The entry struct read
  */
 struct Ext2_dir_entry getEntry(int volumeFd, unsigned int offset) {
@@ -202,14 +189,21 @@ struct Ext2_dir_entry getEntry(int volumeFd, unsigned int offset) {
     //reading the file type
     read(volumeFd, &entry.file_type, 1);
     //filling the array with \0
-    memset(entry.name,'\0',EXT2_NAME_LENGTH);
+    memset(entry.name, '\0', EXT2_NAME_LENGTH);
     //finally reading the file name
-    readUntilStatic(volumeFd,entry.name, entry.name_len+1, 32);
+    readUntilStatic(volumeFd, entry.name, entry.name_len + 1, 32);
     //returning the entry value
     return entry;
 }
 
-void incrementFreeInodes(int fd, unsigned int block_size){
+/******************************************************** DELETE *************************************************************/
+
+/**
+ * Increments the inodes free in the ext2 filesystem because we are going to delete one
+ * @param fd : The file descriptor of the volume
+ * @param block_size : The block size of the ext2 file system
+ */
+void incrementFreeInodes(int fd, unsigned int block_size) {
     unsigned short int bg_free_inodes_count;
     // Read size of inodes
     lseek(fd, OFFSET_FREE_INODES_COUNT + SUPERBLOCK_OFFSET + block_size, SEEK_SET);
@@ -221,11 +215,20 @@ void incrementFreeInodes(int fd, unsigned int block_size){
     write(fd, &bg_free_inodes_count, sizeof(bg_free_inodes_count));
 }
 
-void skipCurrentEntry(int fdVolume, unsigned char block[], unsigned int blockOffset, unsigned int lastSize, __u16 currentEntryRec_len){
+/**
+ * Increments the length of the last entry in order to skip the void created by the deleted file
+ * @param fdVolume: The file descriptor of the volume
+ * @param block : The block pointers of the first inode entry
+ * @param blockOffset: THe offset of the current block
+ * @param lastSize : The last directory size
+ * @param currentEntryRec_len : The current directory size
+ */
+void skipCurrentEntry(int fdVolume, unsigned char block[], unsigned int blockOffset, unsigned int lastSize,
+                      __u16 currentEntryRec_len) {
     struct Ext2_dir_entry *firstEntry, *lastEntry;
-    firstEntry = (struct Ext2_dir_entry *)block;
+    firstEntry = (struct Ext2_dir_entry *) block;
     // Get the last entry and add the rec_len of the actual entry
-    lastEntry = (void *)firstEntry + lastSize;
+    lastEntry = (void *) firstEntry + lastSize;
     //we are doing this to skip the entry we want to delete
     lastEntry->rec_len = lastEntry->rec_len + currentEntryRec_len;
     // Write the new rec_len
@@ -234,50 +237,90 @@ void skipCurrentEntry(int fdVolume, unsigned char block[], unsigned int blockOff
     write(fdVolume, &(lastEntry->rec_len), 2);
 }
 
+/**
+ * Reading the 32bit block id of the first block of the “inode bitmap” for the group represented.
+ * @param fdVolume: The file descriptor of the volume
+ * @param bg_inode_bitmap: The block group inode bitmap
+ * @param inode: The inode number of the file we want to delete
+ * @param block_size: The block size of the ext2 file system
+ * @return : The location of the bitmap
+ */
+uint readBlockGroupInodeBitmapID(int fdVolume, unsigned int *bg_inode_bitmap, __u32 inode, unsigned int block_size) {
+    // Read block group inode bitmap
+    lseek(fdVolume, SUPERBLOCK_OFFSET + block_size + 4, SEEK_SET);
+    read(fdVolume, bg_inode_bitmap, sizeof(*bg_inode_bitmap));
+    // Read the bitmap where the removed entry is
+    return (*bg_inode_bitmap) * block_size + inode / 8;
+}
+
+/**
+ * Updates the bitmap to 0
+ * @param volumeFd: The file descriptor of the volume
+ * @param bitmapLocation: The offset in bytes where we will write our changes
+ * @param bitmap
+ * @param increment
+ * @param inode : The inode number of the file we want to delete
+ */
+void updateBitmap(int volumeFd, uint bitmapLocation, unsigned char bitmap, __u32 increment, __u32 inode) {
+    unsigned char new_bitmap;
+    // Set the bit on the bitmap to 0
+    unsigned char mask = ~(0x80 >> (inode - 8 * increment));
+    new_bitmap = bitmap & mask;
+    // Write the updated bitmaps
+    lseek(volumeFd, bitmapLocation, SEEK_SET);
+    write(volumeFd, &new_bitmap, sizeof(new_bitmap));
+}
+
+/**
+ * Removes the file of the ext2 filesysytem
+ * @param fdVolume: The file descriptor of the volume
+ * @param entry
+ * @param block_size : The block size of the ext2 file system
+ * @param lastSize
+ * @param inode : The inode number of the file we want to delete
+ */
 void removeEntry(int fdVolume, struct Ext2_dir_entry *entry, unsigned int block_size,
-                 unsigned int lastSize, struct Ext2_inode inode)
-{
-    unsigned char bitmap, new_bitmap, block[block_size];
+                 unsigned int lastSize, struct Ext2_inode inode) {
+    unsigned char bitmap, block[block_size];
     unsigned int bg_inode_bitmap;
     unsigned int blockOffset = getBlockOffset(inode.i_block[0], block_size);
 
     // Read the first inode's entry
-    lseek(fdVolume, blockOffset , SEEK_SET);
+    lseek(fdVolume, blockOffset, SEEK_SET);
     read(fdVolume, block, block_size);
-
     //increment the rec_len size of the last directory
     skipCurrentEntry(fdVolume, block, blockOffset, lastSize, entry->rec_len);
     //incrementing the size of free inodes
     incrementFreeInodes(fdVolume, block_size);
-
-    // Read block group inode bitmap
-    lseek(fdVolume,  SUPERBLOCK_OFFSET + block_size + 4, SEEK_SET);
-    read(fdVolume, &bg_inode_bitmap, sizeof(bg_inode_bitmap));
-
-    // Read the bitmap where the removed entry is
-    uint increment = entry->inode / 8;
-
-    lseek(fdVolume, bg_inode_bitmap*block_size + increment, SEEK_SET);
+    // Reading the first block of the inode bitmap for the block group of the inode
+    uint bitmapLocation = readBlockGroupInodeBitmapID(fdVolume, &bg_inode_bitmap, entry->inode, block_size);
+    //reading the bitmap
+    lseek(fdVolume, bitmapLocation, SEEK_SET);
     read(fdVolume, &bitmap, sizeof(bitmap));
-
-    // Set the bit on the bitmap to 0
-    unsigned char mask = ~(0x80 >> (entry->inode - 8 * increment));
-    new_bitmap = bitmap & mask;
-
-    // Write the updated bitmaps
-    lseek(fdVolume, bg_inode_bitmap*block_size + increment, SEEK_SET);
-    write(fdVolume, &new_bitmap, sizeof(new_bitmap));
+    //updating the bitmap
+    updateBitmap(fdVolume, bitmapLocation, bitmap, entry->inode / 8, entry->inode);
 }
 
-void manageDeleteOrFind(int fd, struct Ext2_inode inode, unsigned int block_size, struct Ext2_dir_entry *dirEntry,  uint32_t last_size){
+/******************************************************** FIND *************************************************************/
+/**
+ * Here is when we found the file we wanted but we don't know what we want to do with it.
+ * Here is if we decide to delete the file or show it's information
+ * @param fd : The file descriptor of the volume
+ * @param inode : The inode number of the file
+ * @param block_size : The block size of the ext2 file system
+ * @param dirEntry
+ * @param last_size
+ */
+void manageDeleteOrFind(int fd, struct Ext2_inode inode, unsigned int block_size, struct Ext2_dir_entry *dirEntry,
+                        uint32_t last_size) {
     //checking if the file has to be deleted or not
-    if(fileToDeleteExt2) {
+    if (fileToDeleteExt2) {
         //the file we found has to be deleted
         removeEntry(fd, dirEntry, block_size, last_size, inode);
     } else {
         //we have to display the size of the file in bytes
         //getting the inode of the filename found
-        struct Ext2_inode nextInode = getInode(fd , dirEntry->inode, block_size);
+        struct Ext2_inode nextInode = getInode(fd, dirEntry->inode, block_size);
         //printing size in bytes
         printf("%s %u bytes.\n\n", FILE_FOUND, nextInode.i_size);
     }
@@ -286,7 +329,7 @@ void manageDeleteOrFind(int fd, struct Ext2_inode inode, unsigned int block_size
 /**
 This function looks for the fileName given by parameters and returns true if it exists in the root directoryPath of ext2
 */
-bool lookForFile(int fd, struct Ext2_inode inode, char *fileName, unsigned int block_size, char*** paths) {
+bool lookForFile(int fd, struct Ext2_inode inode, char *fileName, unsigned int block_size, char ***paths) {
     struct Ext2_dir_entry dirEntry;
     uint32_t size;
     uint32_t last_size;
@@ -304,12 +347,12 @@ bool lookForFile(int fd, struct Ext2_inode inode, char *fileName, unsigned int b
                 //cheking if the entry is a file or a directoryPath
                 if (EXT2_FT_REG_FILE == dirEntry.file_type) {
                     //checking if the filename is the same as the one we are looking for
-                    if (!strcmp(fileName, dirEntry.name)){
+                    if (!strcmp(fileName, dirEntry.name)) {
                         //do the things we need to do when finding the file, either delete it or find it's size in bytes
                         manageDeleteOrFind(fd, inode, block_size, &dirEntry, last_size);
                         return true;
                     }
-                //checking if the file we found is a directoryPath
+                    //checking if the file we found is a directoryPath
                 } else if (EXT2_FT_DIR == dirEntry.file_type) {
                     //searchDirectory
                     if (dirEntry.name[0] != '.') {
@@ -322,7 +365,6 @@ bool lookForFile(int fd, struct Ext2_inode inode, char *fileName, unsigned int b
                             //returning true if the file was found
                             return true;
                         }
-
                     }
                 }
                 //the rec_len is the size of the current directoryPath so for the next dir, we have to move rec_len bytes to start reading
@@ -337,13 +379,12 @@ bool lookForFile(int fd, struct Ext2_inode inode, char *fileName, unsigned int b
     return false;
 }
 
-
 /**
 This function tries to find the file given the filename inside an ext2 filesystem
 */
 void find_Ext2(int fd, char *fileName, u_char fileToDeleteExt2Func) {
     int block_size;
-    char** paths;
+    char **paths;
 
     //storing the mode in which we are in, deleting a file or searching one
     fileToDeleteExt2 = fileToDeleteExt2Func;
@@ -374,15 +415,15 @@ void find_Ext2(int fd, char *fileName, u_char fileToDeleteExt2Func) {
     //check if the inode is a directoryPath
     if (S_ISDIR(inode.i_mode)) {
         //now we have to look for the file inside the root directoryPath
-        if(!lookForFile(fd, inode, fileName, block_size, &paths)){
+        if (!lookForFile(fd, inode, fileName, block_size, &paths)) {
             //if we have not found the file print an error message
-            printaColors(BOLDRED,EXT_FILE_NOT_FOUND);
+            printaColors(BOLDRED, EXT_FILE_NOT_FOUND);
         } else {
             //if we have to delete the file we have to print a message of success deleting the file
-            if(fileToDeleteExt2){
+            if (fileToDeleteExt2) {
                 printaColors(BOLDGREEN, EXT_FILE_DELETED);
             }
-            printPaths(paths,fileName,num_of_subdirs);
+            printPaths(paths, fileName, num_of_subdirs);
             freePath(paths, num_of_subdirs);
         }
     }
